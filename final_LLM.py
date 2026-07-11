@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+import sentencepiece as spm
 
 try:
     import torch_directml
@@ -36,6 +37,25 @@ torch.manual_seed(1337)
 with open("input.txt", "r") as file:
     text = file.read()
 
+#applying sentence piece tokenizer to the text
+# 1. Train a model directly from a raw text file.
+# (No pre-tokenization or language-specific preprocessing required!)
+spm.SentencePieceTrainer.train(
+    input='input.txt', 
+    model_prefix='m', 
+    vocab_size=1000
+)
+
+# 2. Load the trained model.
+sp = spm.SentencePieceProcessor(model_file='m.model')
+
+# 3. Encode raw text into subword pieces (strings) or vocabulary IDs (integers).
+#text = "I saw a girl with a telescope."
+pieces = sp.encode(text, out_type=str)
+ids = sp.encode(text, out_type=int)
+vocab_size=len(pieces)
+    
+"""
 #extract all unique characters that occur in text
 chars=sorted(list(set(text)))
 vocab_size=len(chars)
@@ -49,11 +69,12 @@ encode=lambda s: [stoi[c] for c in s]
 decode=lambda l: ''.join([itos[i] for i in l])
 data = torch.tensor(encode(text), dtype=torch.long)
 #the most simplest tokenizer--> should look into tokenizer used by google
+"""
 
 #splitting data into train and test
-n=int(0.9*len(data))
-train_data=data[:n]
-val_data=data[n:]
+n=int(0.9*len(pieces))
+train_data=pieces[:n]
+val_data=pieces[n:]
 
 #extracting batches from training data (data loading)
 def get_batch(split):
@@ -223,4 +244,4 @@ print(loss.item())
 
 #model after optimization
 context=idx=torch.zeros((1,1),dtype=torch.long, device=device)
-print(decode(m.generate(context, max_new_tokens=500)[0].tolist() ))
+print(sp.decode(m.generate(context, max_new_tokens=500)[0].tolist() ))
