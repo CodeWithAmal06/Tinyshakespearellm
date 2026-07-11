@@ -9,10 +9,10 @@ try:
 except ImportError:
     torch_directml = None
 
-batch_size=32
-block_size=64
-max_iters=200
-eval_interval=20
+batch_size=64
+block_size=256
+max_iters=5000
+eval_interval=500
 learning_rate=3e-4
 
 if torch.cuda.is_available():
