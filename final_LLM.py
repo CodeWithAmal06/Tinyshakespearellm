@@ -50,10 +50,10 @@ spm.SentencePieceTrainer.train(
 sp = spm.SentencePieceProcessor(model_file='m.model')
 
 # 3. Encode raw text into subword pieces (strings) or vocabulary IDs (integers).
-#text = "I saw a girl with a telescope."
+# The model needs integer IDs, not strings.
 pieces = sp.encode(text, out_type=str)
 ids = sp.encode(text, out_type=int)
-vocab_size=len(pieces)
+vocab_size = sp.vocab_size()
     
 """
 #extract all unique characters that occur in text
@@ -71,10 +71,10 @@ data = torch.tensor(encode(text), dtype=torch.long)
 #the most simplest tokenizer--> should look into tokenizer used by google
 """
 
-#splitting data into train and test
-n=int(0.9*len(pieces))
-train_data=pieces[:n]
-val_data=pieces[n:]
+#splitting data into train and test using integer token IDs
+n=int(0.9*len(ids))
+train_data=torch.tensor(ids[:n], dtype=torch.long)
+val_data=torch.tensor(ids[n:], dtype=torch.long)
 
 #extracting batches from training data (data loading)
 def get_batch(split):
@@ -98,7 +98,7 @@ def estimate_loss():
         out[split]=losses.mean()
     model.train()
     return out
-"""cons of biagram model:
+"""cons of bigram model:
 It has no long-term memory. Because it only looks one step into the past, 
 generated text quickly loses track of grammar, structure, and meaning, often resulting in repetitive or nonsensical gibberesqe."""
 
@@ -243,5 +243,5 @@ for iter in range(max_iters):
 print(loss.item())
 
 #model after optimization
-context=idx=torch.zeros((1,1),dtype=torch.long, device=device)
-print(sp.decode(m.generate(context, max_new_tokens=500)[0].tolist() ))
+context=torch.zeros((1,1),dtype=torch.long, device=device)
+print(sp.decode(m.generate(context, max_new_tokens=3000)[0].tolist() ))
